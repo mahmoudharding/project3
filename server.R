@@ -26,7 +26,7 @@ northeast <- c("ME", "NH", "NY", "MA", "RI", "VT", "PA", "NJ", "CT", "DE", "MD",
 shinyServer(function(input, output, session){
     
     getDataDemo <- reactive({
-        newDataDemo <- read.csv(file = "./datasets/project3Dataset.csv", 
+        newDataDemo <- read.csv(file = "datasets/project3Dataset.csv", 
                          header = TRUE, 
                          sep = ",", 
                          strip.white = TRUE,
@@ -40,7 +40,7 @@ shinyServer(function(input, output, session){
     })
     
     getDataKbp <- reactive({
-        newDataKbp <- read.csv(file = "./datasets/PoliceKillingsUS.csv",
+        newDataKbp <- read.csv(file = "datasets/PoliceKillingsUS.csv",
                                header = TRUE, 
                                sep = ",", 
                                strip.white = TRUE,
