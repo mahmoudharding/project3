@@ -283,7 +283,7 @@ id,name,date,manner_of_death,armed,age,gender,race,city,state,signs_of_mental_il
 366,Dante Noble,15/04/15,shot,knife,41,M,B,Spartanburg,SC,FALSE,attack,Not fleeing,FALSE
 367,Frank Shephard,15/04/15,shot,unarmed,41,M,B,Houston,TX,FALSE,other,Car,FALSE
 368,Mark W. Adair,15/04/15,shot,toy weapon,51,M,W,Columbia,MO,FALSE,attack,Car,TRUE
-369,Stanley Watson,15/04/15,shot,gun,72,M,W,Ca–on City,CO,TRUE,attack,Not fleeing,FALSE
+369,Stanley Watson,15/04/15,shot,gun,72,M,W,CaÂ–on City,CO,TRUE,attack,Not fleeing,FALSE
 374,Ernesto Flores,15/04/15,shot,toy weapon,52,M,H,Montclair,CA,TRUE,attack,Not fleeing,FALSE
 373,Rodolfo Velazquez,16/04/15,shot,knife,47,M,H,Shafter,CA,FALSE,other,Not fleeing,FALSE
 380,Jeffrey Kemp,17/04/15,shot,gun,18,M,B,Chicago,IL,FALSE,attack,Foot,FALSE
