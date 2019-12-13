@@ -26,7 +26,7 @@ northeast <- c("ME", "NH", "NY", "MA", "RI", "VT", "PA", "NJ", "CT", "DE", "MD",
 shinyServer(function(input, output, session){
     
     getDataDemo <- reactive({
-        newDataDemo <- read.csv(file = "datasets/project3Dataset.csv", 
+        newDataDemo <- read.csv(file = "./datasets/project3Dataset.csv", 
                          header = TRUE, 
                          sep = ",", 
                          strip.white = TRUE,
@@ -39,8 +39,9 @@ shinyServer(function(input, output, session){
         newDataDemo <- na.omit(newDataDemo)
     })
     
+    # Get police killing dataset
     getDataKbp <- reactive({
-        newDataKbp <- read.csv(file = "datasets/PoliceKillingsUS.csv",
+        newDataKbp <- read.csv(file = "./datasets/PoliceKillingsUS.csv",
                                header = TRUE, 
                                sep = ",", 
                                strip.white = TRUE,
@@ -61,14 +62,8 @@ shinyServer(function(input, output, session){
         newDataKbp <- na.omit(newDataKbp)
     })
     
-#    values <- reactiveValues(toHighlight = rep(FALSE, length(x$Freq)), 
-#                             selectedBar = NULL)
-    
-#    observeEvent(eventExpr = input$barPlot1Click, {
-#        values$selectedBar <- x$Freq[input$barPlot1Click$x]
-#        values$toHighligth <- x$Freq %in% values$selectedBar
-#    })
-    
+
+    # Create reactive scatterplot
     plotGraph1 <- reactive({
         newDataKbp <- getDataKbp()
         x <- as.data.frame(table(newDataKbp$region, newDataKbp$year, newDataKbp$race))
@@ -140,8 +135,7 @@ shinyServer(function(input, output, session){
         x <- newDataKbp %>% select(race, region, threat_level, flee)
         tm <- rpart(race ~ ., data = x)
         y <- data.frame(tm["splits"])
-        y
-        #return(as.datatable(formattable(y, align = c("r", rep(ncol(y))))))
+        formattable(y)
     })
     
     output$lmModel <- renderPrint({

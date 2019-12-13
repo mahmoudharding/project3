@@ -66,7 +66,7 @@ shinyUI(fluidPage(
                      mainPanel(fluidRow(
                          h4("Data Table"),
                          br(),
-                         DT::dataTableOutput("table3"),
+                         DT::dataTableOutput("table2"),
                          br()
                      ))
                  )),
@@ -98,7 +98,7 @@ shinyUI(fluidPage(
                          verbatimTextOutput("lmModel"),
                          br(), br(),
                          h4("Tree Classification by Race"),
-                         DT::dataTableOutput("table2"),
+                         DT::dataTableOutput("table3"),
                          br()
                          )))),
         tabPanel("Plots", fluid = TRUE,
