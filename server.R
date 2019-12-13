@@ -16,6 +16,7 @@ library(kableExtra)
 library(DT)
 library(formattable)
 library(rpart)
+library(rpart.plot)
 
 # US regions
 west      <- c("WA", "OR", "CA", "NV", "AZ", "ID", "MT", "WY", "CO", "NM", "UT")
@@ -26,7 +27,7 @@ northeast <- c("ME", "NH", "NY", "MA", "RI", "VT", "PA", "NJ", "CT", "DE", "MD",
 shinyServer(function(input, output, session){
     
     getDataDemo <- reactive({
-        newDataDemo <- read.csv(file = "project3Dataset.csv", 
+        newDataDemo <- read.csv(file = "./datasets/project3Dataset.csv", 
                          header = TRUE, 
                          sep = ",", 
                          strip.white = TRUE,
@@ -36,12 +37,14 @@ shinyServer(function(input, output, session){
                               region = ifelse(state %in% south, "South",
                                                    ifelse(state %in% northeast, "Northeast", 
                                                    ifelse(state %in% west, "West", "Midwest"))))
+        newDataDemo <- mutate(newDataDemo,
+                              incomeLevel = ifelse(medIncome < 50000, "Below Average", "Above Average"))
         newDataDemo <- na.omit(newDataDemo)
     })
     
     # Get police killing dataset
     getDataKbp <- reactive({
-        newDataKbp <- read.csv(file = "PoliceKillingsUS.csv",
+        newDataKbp <- read.csv(file = "./datasets/PoliceKillingsUS.csv",
                                header = TRUE, 
                                sep = ",", 
                                strip.white = TRUE,
@@ -96,6 +99,32 @@ shinyServer(function(input, output, session){
             ggtitle(paste("Number of People in the US Killed by the Police in ", input$year))
     })
     
+    plotGraph2 <- reactive({
+        newDataDemo <- getDataDemo()
+        if(length(input$selectbox) == 0){
+            x <- newDataDemo %>% select(medIncome,
+                                        povertyRate)
+        } 
+        if(input$selectbox == "Percent Black"){
+            x <- newDataDemo %>% select(medIncome,
+                                        povertyRate,
+                                        perBlack)
+        }
+        if(input$selectbox == "Percent White"){
+            x <- newDataDemo %>% select(medIncome,
+                                        povertyRate,
+                                        perWhite)
+        }
+        if(input$selectbox == "Percent Black and Percent White"){
+            x <- newDataDemo %>% select(medIncome,
+                                        povertyRate,
+                                        perBlack,
+                                        perWhite)
+        }
+        pc <- prcomp(x, center = TRUE, scale = TRUE)
+        biplot(pc)
+    })
+    
     dataTable2 <- reactive({
         newDataKbp <- getDataKbp()
         x <- newDataKbp %>% select(year, 
@@ -130,54 +159,38 @@ shinyServer(function(input, output, session){
         formattable(x, align = c("r", rep(ncol(x)))) 
     })
     
-    dataTable3 <- reactive({
-        newDataKbp <- getDataKbp()
-        x <- newDataKbp %>% select(race, region, threat_level, flee)
-        tm <- rpart(race ~ ., data = x)
-        y <- data.frame(tm["splits"])
-        formattable(y)
-    })
-    
     output$lmModel <- renderPrint({
         newDataDemo <- getDataDemo()
         x <- newDataDemo
         if(input$radio == "Poverty Rate"){
-            mlm <- lm(medIncome ~ povertyRate, data = x)
+            lm <- lm(medIncome ~ povertyRate, data = x)
         } else if(input$radio == "Percent Black"){
-            mlm <- lm(medIncome ~ perBlack, data = x)
+            lm <- lm(medIncome ~ perBlack, data = x)
         } else if(input$radio == "Percent White"){
-            mlm <- lm(medIncome ~ perWhite, data = x)
+            lm <- lm(medIncome ~ perWhite, data = x)
         } else if(input$radio == "Percent Hispanic"){
-            mlm <- lm(medIncome ~ perHis, data = x)
+            lm <- lm(medIncome ~ perHis, data = x)
         } else {
-            mlm <- lm(medIncome ~ perCompHighSchool, data = x)
+            lm <- lm(medIncome ~ perCompHighSchool, data = x)
         }
-        summary(mlm)
+        summary(lm)
     })
-
-    output$pcaPlot1 <- renderPlot({
+    
+    output$treeModel <- renderPlot({
         newDataDemo <- getDataDemo()
-        if(is.null(input$checkbox)){
-            x <- newDataDemo %>% select(medIncome, 
-                                        povertyRate)
-        } else if(input$checkbox %in% c("Percent Black")){
-            x <- newDataDemo %>% select(medIncome,
-                                        povertyRate,
-                                        perBlack)
-        } else if(input$checkbox %in% c("Percent White")){
-            x <- newDataDemo %>% select(medIncome,
-                                        povertyRate,
-                                        perWhite)
-        } else if(input$checkbox %in% c("Percent White", "Percent Black")){
-            x <- newDataDemo %>% select(medIncome,
-                                        povertyRate,
-                                        perWhite, 
-                                        perBlack)
+        x <- newDataDemo 
+        if(input$radio == "Poverty Rate"){
+            tm <- rpart(medIncome ~ povertyRate, data = x)
+        } else if(input$radio == "Percent Black"){
+            tm <- rpart(medIncome ~ perBlack, data = x)
+        } else if(input$radio == "Percent White"){
+            tm <- rpart(medIncome ~ perWhite, data = x)
+        } else if(input$radio == "Percent Hispanic"){
+            tm <- rpart(medIncome ~ perHis, data = x)
         } else {
-            x <- newDataDemo %>% select(medIncome, povertyRate)
+            tm <- rpart(medIncome ~ perCompHighSchool, data = x)
         }
-        pc <- prcomp(x, center = TRUE, scale = TRUE)
-        biplot(pc)
+        rpart.plot(tm)
     })
     
     output$scatterPlot1 <- renderPlot({
@@ -192,43 +205,43 @@ shinyServer(function(input, output, session){
                                     medIncome)
         if(input$scatter == "Percent Asian"){
             ggplot(x, aes(x = perAsian, y = medIncome)) + geom_point() +
-                labs(x = "Percent of Asian Residents in the County", 
+                labs(x = "Percent of Asian Residents", 
                      y = "Median Income") +
                 theme(plot.title = element_text(hjust = 0.5, size = 14)) + 
                           ggtitle(paste(input$scatter))
         } else if(input$scatter == "Percent Black"){
             ggplot(x, aes(x = perBlack, y = medIncome)) + geom_point() +
-                labs(x = "Percent of Black Residents in the County", 
+                labs(x = "Percent of Black Residents", 
                      y = "Median Income") +
                 theme(plot.title = element_text(hjust = 0.5, size = 14)) + 
                 ggtitle(paste(input$scatter))
         } else if(input$scatter == "Percent Hispanic"){
             ggplot(x, aes(x = perHis, y = medIncome)) + geom_point() +
-                labs(x = "Percent of Hispanic Residents in the County", 
+                labs(x = "Percent of Hispanic Residents", 
                      y = "Median Income") +
                 theme(plot.title = element_text(hjust = 0.5, size = 14)) + 
                 ggtitle(paste(input$scatter))
         } else if(input$scatter == "Percent Native American"){
             ggplot(x, aes(x = perNativeAm, y = medIncome)) + geom_point() +
-                labs(x = "Percent of Native American Residents in the County", 
+                labs(x = "Percent of Native American Residents", 
                      y = "Median Income") +
                 theme(plot.title = element_text(hjust = 0.5, size = 14)) + 
                 ggtitle(paste(input$scatter))
         } else if(input$scatter == "Percent White"){
             ggplot(x, aes(x = perWhite, y = medIncome)) + geom_point() +
-                labs(x = "Percent of White Residents in the County", 
+                labs(x = "Percent of White Residents", 
                      y = "Median Income") +
                 theme(plot.title = element_text(hjust = 0.5, size = 14)) + 
                 ggtitle(paste(input$scatter))
         } else if(input$scatter == "Percent Living in Poverty"){
             ggplot(x, aes(x = povertyRate, y = medIncome)) + geom_point() +
-                labs(x = "Percent of Residents Living in Poverty in the County", 
+                labs(x = "Percent of Residents Living in Poverty", 
                      y = "Median Income") +
                 theme(plot.title = element_text(hjust = 0.5, size = 14)) + 
                 ggtitle(paste(input$scatter))
         } else {
                 ggplot(x, aes(x = perCompHighSchool, y = medIncome)) + geom_point() +
-                    labs(x = "Percent of Residents the Completed High School in the County", 
+                    labs(x = "Percent of Residents that Completed High School", 
                          y = "Median Income") +
                     theme(plot.title = element_text(hjust = 0.5, size = 14)) + 
                     ggtitle(paste(input$scatter))
@@ -237,6 +250,10 @@ shinyServer(function(input, output, session){
     
     output$barPlot1 <- renderPlot({
         plotGraph1()
+    })
+    
+    output$pcaPlot1 <- renderPlot({
+        plotGraph2()
     })
     
     output$table1 <- DT::renderDataTable({
@@ -287,8 +304,38 @@ shinyServer(function(input, output, session){
         dataTable2()
     })
     
-    output$table3 <- DT::renderDataTable({
-        dataTable3()
+    output$table3 <- renderTable({
+        newDataDemo <- getDataDemo()
+        x <- newDataDemo %>% select(state,
+                                    perAsian,
+                                    perBlack, 
+                                    perHis, 
+                                    perNativeAm, 
+                                    perWhite,
+                                    povertyRate,
+                                    perCompHighSchool,
+                                    medIncome)
+        if(input$scatter == "Percent Asian"){
+            x <- x %>% select(state, perAsian, medIncome)
+        } else if(input$scatter == "Percent Black"){
+            x <- x %>% select(state, perBlack, medIncome)
+        } else if(input$scatter == "Percent Hispanic"){
+                x <- x %>% select(state, perHis, medIncome)
+        } else if(input$scatter == "Percent Native American"){
+            x <- x %>% select(state, perNativeAm, medIncome)
+        } else if(input$scatter == "Percent White"){
+            x <- x %>% select(state, perWhite, medIncome)
+        } else if(input$scatter == "Pverty Rate"){
+            x <- x %>% select(state, povertyRate, medIncome)
+        } else {
+            x <- x %>% select(state, perCompHighSchool, medIncome)
+        }
+        n = nrow(brushedPoints(x, brush = input$brushPoints))
+        if(n == 0){
+            return()
+        } else {
+            brushedPoints(x, brush = input$brushPoints)
+        }
     })
     
     output$text1 <- renderText({
@@ -313,7 +360,6 @@ shinyServer(function(input, output, session){
     })
     
     output$text4 <- renderUI({
-        #paste("Summary from Linear Model with One Variable (", input$radio, ")")
         withMathJax(helpText("Summary from Linear Model with One Variable $$y=mx+b$$"))
     })
     

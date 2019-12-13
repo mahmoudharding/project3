@@ -56,7 +56,7 @@ shinyUI(fluidPage(
                      sidebarPanel(
                          selectizeInput("year1", 
                                         h5("Year"), 
-                                        selected = "2105", 
+                                        selected = "2015", 
                                         choices = c("2015", 
                                                     "2016", 
                                                     "2017")),
@@ -73,11 +73,12 @@ shinyUI(fluidPage(
         tabPanel("Principal Components Analysis of Demographic Data", fluid = TRUE,
                  sidebarLayout(
                      sidebarPanel(
-                         checkboxGroupInput("checkbox",
-                                            h3("Choose components to use with median income and poverty rate"),
+                         selectInput("selectbox",
+                                            h5("Choose components to use with median income and poverty rate"),
                                             choices = c("Percent Black",
                                                         "Percent White",
-                                                        "Percent Graduated from High School"))
+                                                        "Percent Black and Percent White"),
+                                     selected = "")
                      ),
                      mainPanel(fluidRow(
                          plotOutput("pcaPlot1"),
@@ -86,26 +87,25 @@ shinyUI(fluidPage(
                  sidebarLayout(
                      sidebarPanel(
                          radioButtons("radio",
-                                      h5("Chose the variables for linear modeling."),
+                                      h5("Chose the variable to compare a linear model to a tree model."),
                                       choices = c("Poverty Rate",
                                                   "Percent White",
                                                   "Percent Black",
                                                   "Percent Hispanic",
                                                   "Percent Completed High School"),
-                                      selected = "Poverty Rate")),
+                                      selected =  "Poverty Rate")),
                      mainPanel(fluidRow(
                          uiOutput("text4"),
                          verbatimTextOutput("lmModel"),
-                         br(), br(),
-                         h4("Tree Classification by Race"),
-                         DT::dataTableOutput("table3"),
-                         br()
+                         br(),
+                         h5("Tree Model"),
+                         plotOutput("treeModel")
                          )))),
         tabPanel("Plots", fluid = TRUE,
                  sidebarLayout(
                      sidebarPanel(
                          selectizeInput("scatter", 
-                                        h5("Choose ademographic category to plot against median household income for all US counties"),
+                                        h5("Choose ademographic category to plot against median household income for all US Sates"),
                                         selected = "Percent White",
                                         choices = c("Percent Asian",
                                                     "Percent Black",
@@ -115,7 +115,11 @@ shinyUI(fluidPage(
                                                     "Percent Graudated from High School",
                                                     "Percent Living in Poverty"))),
                      mainPanel(fluidRow(
-                         plotOutput("scatterPlot1"),
+                         plotOutput("scatterPlot1", 
+                                    brush = "brushPoints"),
+                         br(),
+                         h5("Table of Selected Data Points"),
+                         tableOutput("table3"),
                          br()))))
     )
 ))
