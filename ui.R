@@ -17,7 +17,11 @@ shinyUI(fluidPage(
                      h3("Desrciption"),
                      htmlOutput("text1"),
                      h3("Datasets"),
-                     htmlOutput("text2"))),
+                     htmlOutput("text2"),
+                     h3("Link to Data Files on Kaggle"),
+                     htmlOutput("htmlLink")
+                 )
+        ),
         tabPanel("Fatal Shootings (Bar Graph and Odds)", fluid = TRUE,
                  sidebarLayout(
                     sidebarPanel(
@@ -26,7 +30,8 @@ shinyUI(fluidPage(
                                        selected = "2105", 
                                        choices = c("2015", 
                                                    "2016", 
-                                                   "2017")),
+                                                   "2017")
+                                       ),
                         br(),
                         selectizeInput("reg", 
                                        h5("Choose a region to see percentages and odds for the selected year."),
@@ -34,12 +39,14 @@ shinyUI(fluidPage(
                                        choices = c("Midwest",
                                                    "Northeast",
                                                    "South", 
-                                                   "West")),
+                                                   "West")
+                                       ),
                         br(),
                         radioButtons("butt1",
-                                     h5("Chose the file type to download the bar graph."),
+                                     h5("Choose the file type to download the bar graph."),
                                      choices = list("png",
-                                                    "pdf")),
+                                                    "pdf")
+                                     ),
                         br(),
                         downloadButton("downloadPlot1", "Download Button")
                     ),
@@ -50,7 +57,8 @@ shinyUI(fluidPage(
                         br(),
                         DT::dataTableOutput("table1")
                     )),
-                 )),
+                 )
+        ),
         tabPanel("Fatal Shootings (Data Tables)", fluid = TRUE,
                  sidebarLayout(
                      sidebarPanel(
@@ -59,30 +67,34 @@ shinyUI(fluidPage(
                                         selected = "2015", 
                                         choices = c("2015", 
                                                     "2016", 
-                                                    "2017")),
+                                                    "2017")
+                                        ),
                          br(),
                          downloadButton("downloadTable2", "Download Button")
                      ),
                      mainPanel(fluidRow(
-                         h4("Data Table"),
                          br(),
                          DT::dataTableOutput("table2"),
                          br()
                      ))
-                 )),
+                 )
+         ),
         tabPanel("Principal Components Analysis of Demographic Data", fluid = TRUE,
                  sidebarLayout(
                      sidebarPanel(
                          selectInput("selectbox",
-                                            h5("Choose components to use with median income and poverty rate"),
-                                            choices = c("Percent Black",
-                                                        "Percent White",
-                                                        "Percent Black and Percent White"),
+                                     h5("Choose components to use with median income and poverty rate"),
+                                     choices = c("Percent Black",
+                                                 "Percent White",
+                                                 "Percent Black and Percent White"),
                                      selected = "")
-                     ),
+                         ),
                      mainPanel(fluidRow(
                          plotOutput("pcaPlot1"),
-                         br())))),
+                         br()
+                     ))
+                 )
+        ),
         tabPanel("Models", fluid = TRUE,
                  sidebarLayout(
                      sidebarPanel(
@@ -93,14 +105,23 @@ shinyUI(fluidPage(
                                                   "Percent Black",
                                                   "Percent Hispanic",
                                                   "Percent Completed High School"),
-                                      selected =  "Poverty Rate")),
+                                      selected =  "Poverty Rate")
+                         ),
                      mainPanel(fluidRow(
                          uiOutput("text4"),
                          verbatimTextOutput("lmModel"),
                          br(),
                          h5("Tree Model"),
-                         plotOutput("treeModel")
-                         )))),
+                         plotOutput("treeModelPlot"),
+                         br(),
+                         verbatimTextOutput("treeModel"),
+                         br(),
+                         h5("Predict Using the Linear Model"),
+                         br(),
+                         verbatimTextOutput("predictModel")
+                         ))
+                 )
+        ),
         tabPanel("Plots", fluid = TRUE,
                  sidebarLayout(
                      sidebarPanel(
@@ -113,13 +134,18 @@ shinyUI(fluidPage(
                                                     "Percent Native American",
                                                     "Percent White",
                                                     "Percent Graudated from High School",
-                                                    "Percent Living in Poverty"))),
+                                                    "Percent Living in Poverty")
+                                        )
+                         ),
                      mainPanel(fluidRow(
                          plotOutput("scatterPlot1", 
                                     brush = "brushPoints"),
                          br(),
                          h5("Table of Selected Data Points"),
                          tableOutput("table3"),
-                         br()))))
+                         br()
+                      ))
+                 )
+        )
     )
 ))

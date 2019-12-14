@@ -6,7 +6,6 @@
 #
 #    http://shiny.rstudio.com/
 #
-
 library(shiny)
 library(readr)
 library(dplyr)
@@ -26,40 +25,52 @@ northeast <- c("ME", "NH", "NY", "MA", "RI", "VT", "PA", "NJ", "CT", "DE", "MD",
 
 shinyServer(function(input, output, session){
     
+    # Read demographic csv file
     getDataDemo <- reactive({
-        newDataDemo <- read.csv(file = "./datasets/project3Dataset.csv", 
-                         header = TRUE, 
-                         sep = ",", 
-                         strip.white = TRUE,
-                         na.strings = c(" ", "-", "(X)", ""),
-                         stringsAsFactors = FALSE)
+        newDataDemo <- read.csv(file = "./datasets/project3Dataset.csv",
+                                header = TRUE, 
+                                sep = ",", 
+                                strip.white = TRUE,
+                                na.strings = c(" ", "-", "(X)", ""),
+                                stringsAsFactors = FALSE
+                                )
         newDataDemo <- mutate(newDataDemo, 
-                              region = ifelse(state %in% south, "South",
-                                                   ifelse(state %in% northeast, "Northeast", 
-                                                   ifelse(state %in% west, "West", "Midwest"))))
+                              region = ifelse(state %in% south, "South",  
+                                              ifelse(state %in% northeast, "Northeast", 
+                                                     ifelse(state %in% west, "West", "Midwest")
+                                                     )
+                                              )
+                              )
         newDataDemo <- mutate(newDataDemo,
-                              incomeLevel = ifelse(medIncome < 50000, "Below Average", "Above Average"))
+                              incomeLevel = ifelse(medIncome < 50000, "Below Average", "Above Average")
+                              )
         newDataDemo <- na.omit(newDataDemo)
     })
     
-    # Get police killing dataset
+    # Get police killing csv file
     getDataKbp <- reactive({
         newDataKbp <- read.csv(file = "./datasets/PoliceKillingsUS.csv",
                                header = TRUE, 
                                sep = ",", 
                                strip.white = TRUE,
                                na.strings = c(" "),
-                               stringsAsFactors = FALSE)
+                               stringsAsFactors = FALSE
+                               )
         newDataKbp$id <- NULL
         
         # Add region and year to the dataset
-        newDataKbp  <- mutate(newDataKbp, region = ifelse(state %in% south, "South",
-                                            ifelse(state %in% northeast, "Northeast", 
-                                                   ifelse(state %in% west, "West",
-                                                          "Midwest"))))
+        newDataKbp  <- mutate(newDataKbp, 
+                              region = ifelse(state %in% south, "South",
+                                              ifelse(state %in% northeast, "Northeast", 
+                                                     ifelse(state %in% west, "West", "Midwest")
+                                                     )
+                                              )
+                              )
         year <- paste0("20", substring(as.character(newDataKbp$date),
                                        nchar(newDataKbp$date)-2+1,
-                                       nchar(as.character((newDataKbp$date)))))
+                                       nchar(as.character((newDataKbp$date)))
+                                       )
+                       )
         newDataKbp <- cbind(newDataKbp, year)
         newDataKbp <- newDataKbp %>% filter(race %in% c("A", "B", "H", "N", "W"))
         newDataKbp <- na.omit(newDataKbp)
@@ -77,33 +88,34 @@ shinyServer(function(input, output, session){
         } else {
             x <- as.data.frame(x[x$Var2 == levels(x$Var2)[3], ])
         }
+        
+        # Creat plot object and add layers
         ggplot(x, aes(x = Var1, y = Freq, fill = factor(Var3))) +
             geom_bar(stat = "identity", 
                      position = "dodge", 
                      color = "black") + 
             labs(x = "US Region", 
                  y = NULL) + 
-            theme(plot.title = element_text(hjust = 0.5, 
-                                            size = 18), 
-                                            #face = "bold"),
+            theme(plot.title = element_text(hjust = 0.5, size = 18), 
                   axis.text = element_text(size = 12),
                   legend.title = element_text(size = 14), 
-                                              #face = "bold"),
                   legend.text = element_text(size = 12)) + 
             scale_fill_discrete(name = "Race", 
                                 labels = c("Asian",
                                            "Black",
                                            "Hispanic",
                                            "Native American",
-                                           "White")) + 
+                                           "White")
+                                ) + 
             ggtitle(paste("Number of People in the US Killed by the Police in ", input$year))
     })
     
+    # Creat plot object  for biplot
     plotGraph2 <- reactive({
         newDataDemo <- getDataDemo()
+        
         if(length(input$selectbox) == 0){
-            x <- newDataDemo %>% select(medIncome,
-                                        povertyRate)
+            x <- newDataDemo %>% select(medIncome, povertyRate)
         } 
         if(input$selectbox == "Percent Black"){
             x <- newDataDemo %>% select(medIncome,
@@ -125,6 +137,7 @@ shinyServer(function(input, output, session){
         biplot(pc)
     })
     
+    # Create table to display police killing information
     dataTable2 <- reactive({
         newDataKbp <- getDataKbp()
         x <- newDataKbp %>% select(year, 
@@ -138,6 +151,7 @@ shinyServer(function(input, output, session){
                                    city,
                                    state,
                                    region)
+        
         if(input$year1 == "2015"){
             x <- x %>% filter(year == "2015")
         } else if(input$year1 == "2016"){
@@ -159,24 +173,44 @@ shinyServer(function(input, output, session){
         formattable(x, align = c("r", rep(ncol(x)))) 
     })
     
+    # Create the linear model
     output$lmModel <- renderPrint({
         newDataDemo <- getDataDemo()
         x <- newDataDemo
         if(input$radio == "Poverty Rate"){
-            lm <- lm(medIncome ~ povertyRate, data = x)
+            lrm <- lm(medIncome ~ povertyRate, data = x)
         } else if(input$radio == "Percent Black"){
-            lm <- lm(medIncome ~ perBlack, data = x)
+            lrm <- lm(medIncome ~ perBlack, data = x)
         } else if(input$radio == "Percent White"){
-            lm <- lm(medIncome ~ perWhite, data = x)
+            lrm <- lm(medIncome ~ perWhite, data = x)
         } else if(input$radio == "Percent Hispanic"){
-            lm <- lm(medIncome ~ perHis, data = x)
+            lrm <- lm(medIncome ~ perHis, data = x)
         } else {
-            lm <- lm(medIncome ~ perCompHighSchool, data = x)
+            lrm <- lm(medIncome ~ perCompHighSchool, data = x)
         }
-        summary(lm)
+        summary(lrm)
     })
     
-    output$treeModel <- renderPlot({
+    # Create tree model
+    output$treeModel <- renderPrint({
+        newDataDemo <- getDataDemo()
+        x <- newDataDemo
+        if(input$radio == "Poverty Rate"){
+            tm <- rpart(medIncome ~ povertyRate, data = x)
+        } else if(input$radio == "Percent Black"){
+            tm <- rpart(medIncome ~ perBlack, data = x)
+        } else if(input$radio == "Percent White"){
+            tm <- rpart(medIncome ~ perWhite, data = x)
+        } else if(input$radio == "Percent Hispanic"){
+            tm <- rpart(medIncome ~ perHis, data = x)
+        } else {
+            tm <- rpart(medIncome ~ perCompHighSchool, data = x)
+        }
+        summary(tm)
+    })
+    
+    # Create the tree model plot
+    output$treeModelPlot <- renderPlot({
         newDataDemo <- getDataDemo()
         x <- newDataDemo 
         if(input$radio == "Poverty Rate"){
@@ -195,56 +229,42 @@ shinyServer(function(input, output, session){
     
     output$scatterPlot1 <- renderPlot({
         newDataDemo <- getDataDemo()
-        x <- newDataDemo %>% filter(perAsian,
-                                    perBlack, 
-                                    perHis, 
-                                    perNativeAm, 
-                                    perWhite,
-                                    povertyRate,
-                                    perCompHighSchool,
-                                    medIncome)
+        x <- newDataDemo
         if(input$scatter == "Percent Asian"){
             ggplot(x, aes(x = perAsian, y = medIncome)) + geom_point() +
-                labs(x = "Percent of Asian Residents", 
-                     y = "Median Income") +
+                labs(x = "Percent of Asian Residents", y = "Median Income") +
                 theme(plot.title = element_text(hjust = 0.5, size = 14)) + 
-                          ggtitle(paste(input$scatter))
+                ggtitle(paste(input$scatter, "(", input$year, ")"))
         } else if(input$scatter == "Percent Black"){
             ggplot(x, aes(x = perBlack, y = medIncome)) + geom_point() +
-                labs(x = "Percent of Black Residents", 
-                     y = "Median Income") +
+                labs(x = "Percent of Black Residents", y = "Median Income") +
                 theme(plot.title = element_text(hjust = 0.5, size = 14)) + 
-                ggtitle(paste(input$scatter))
+                ggtitle(paste(input$scatter, "(", input$year, ")"))
         } else if(input$scatter == "Percent Hispanic"){
             ggplot(x, aes(x = perHis, y = medIncome)) + geom_point() +
-                labs(x = "Percent of Hispanic Residents", 
-                     y = "Median Income") +
+                labs(x = "Percent of Hispanic Residents", y = "Median Income") +
                 theme(plot.title = element_text(hjust = 0.5, size = 14)) + 
-                ggtitle(paste(input$scatter))
+                ggtitle(paste(input$scatter, "(", input$year, ")"))
         } else if(input$scatter == "Percent Native American"){
             ggplot(x, aes(x = perNativeAm, y = medIncome)) + geom_point() +
-                labs(x = "Percent of Native American Residents", 
-                     y = "Median Income") +
+                labs(x = "Percent of Native American Residents", y = "Median Income") +
                 theme(plot.title = element_text(hjust = 0.5, size = 14)) + 
-                ggtitle(paste(input$scatter))
+                ggtitle(paste(input$scatter, "(", input$year, ")"))
         } else if(input$scatter == "Percent White"){
             ggplot(x, aes(x = perWhite, y = medIncome)) + geom_point() +
-                labs(x = "Percent of White Residents", 
-                     y = "Median Income") +
+                labs(x = "Percent of White Residents", y = "Median Income") +
                 theme(plot.title = element_text(hjust = 0.5, size = 14)) + 
-                ggtitle(paste(input$scatter))
+                ggtitle(paste(input$scatter, "(", input$year, ")"))
         } else if(input$scatter == "Percent Living in Poverty"){
             ggplot(x, aes(x = povertyRate, y = medIncome)) + geom_point() +
-                labs(x = "Percent of Residents Living in Poverty", 
-                     y = "Median Income") +
+                labs(x = "Percent of Residents Living in Poverty", y = "Median Income") +
                 theme(plot.title = element_text(hjust = 0.5, size = 14)) + 
-                ggtitle(paste(input$scatter))
+                ggtitle(paste(input$scatter, "(", input$year, ")"))
         } else {
                 ggplot(x, aes(x = perCompHighSchool, y = medIncome)) + geom_point() +
-                    labs(x = "Percent of Residents that Completed High School", 
-                         y = "Median Income") +
-                    theme(plot.title = element_text(hjust = 0.5, size = 14)) + 
-                    ggtitle(paste(input$scatter))
+                    labs(x = "Percent of Residents that Completed High School", y = "Median Income") + 
+                theme(plot.title = element_text(hjust = 0.5, size = 14)) + 
+                ggtitle(paste(input$scatter, "(", input$year, ")"))
         }
     })
     
@@ -306,15 +326,8 @@ shinyServer(function(input, output, session){
     
     output$table3 <- renderTable({
         newDataDemo <- getDataDemo()
-        x <- newDataDemo %>% select(state,
-                                    perAsian,
-                                    perBlack, 
-                                    perHis, 
-                                    perNativeAm, 
-                                    perWhite,
-                                    povertyRate,
-                                    perCompHighSchool,
-                                    medIncome)
+        x <- newDataDemo
+        
         if(input$scatter == "Percent Asian"){
             x <- x %>% select(state, perAsian, medIncome)
         } else if(input$scatter == "Percent Black"){
@@ -338,8 +351,12 @@ shinyServer(function(input, output, session){
         }
     })
     
+    output$htmlLink <- renderUI({
+        a("Kaggle Police Shootings Dataset", href = "https://www.kaggle.com/kwullum/fatal-police-shootings-in-the-us") 
+    })
+    
     output$text1 <- renderText({
-        p1 <- ("The Washington Post has a dataset of fatal shooting in the US by a police officer in the line of duty. The dataset contains the city, state, race, age and gender of the deceased. This information was gathered from law enforcement websites, local new reports, social media, and by monitoring independent databases such as 'Killed by police' and 'Fatal Encounters'.")
+        p1 <- ("The Washington Post has a dataset of fatal shootings in the US by police officers in the line of duty. The dataset contains the city, state, race, age, gender of the deceased as well as other information concerning the circumstances of the incident. The csv files were taken from . According to the owner, this information was gathered from law enforcement websites, local new reports, social media, and by monitoring independent databases such as 'Killed by police' and 'Fatal Encounters'.")
 })
 
     output$text2 <- renderText({
@@ -356,7 +373,7 @@ shinyServer(function(input, output, session){
     })
 
     output$text3 <- renderText({
-        paste("Odds of Being Killed by a Police Officer in the ", input$reg, "Region")
+        paste("Odds of Being Killed by a Police Officer in the ", input$reg, "Region (", input$year,")" )
     })
     
     output$text4 <- renderUI({
