@@ -105,7 +105,12 @@ shinyUI(fluidPage(
                                                   "Percent Black",
                                                   "Percent Hispanic",
                                                   "Percent Completed High School"),
-                                      selected =  "Poverty Rate")
+                                      selected =  "Poverty Rate"),
+                         br(),
+                         textInput("value",
+                                   h5("Input a value to use with the linear model."),
+                                   value = "0"
+                                   )
                          ),
                      mainPanel(fluidRow(
                          uiOutput("text4"),
@@ -116,7 +121,7 @@ shinyUI(fluidPage(
                          br(),
                          verbatimTextOutput("treeModel"),
                          br(),
-                         h5("Predict Using the Linear Model"),
+                         h5("Predicted value from the linear model."),
                          br(),
                          verbatimTextOutput("predictModel")
                          ))

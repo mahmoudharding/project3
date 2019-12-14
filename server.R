@@ -173,6 +173,35 @@ shinyServer(function(input, output, session){
         formattable(x, align = c("r", rep(ncol(x)))) 
     })
     
+    # Prediction input value
+    predictInput <- reactive({
+        as.numeric(input$value)
+    })
+    
+    # Create prediction 
+    output$predictModel <- renderPrint({
+        newDataDemo <- getDataDemo()
+        x <- newDataDemo
+        var <- input$radio
+        
+        if(input$radio == "Poverty Rate"){
+            lrm <- lm(medIncome ~ povertyRate, data = x)
+            predict(lrm, data.frame(povertyRate = as.numeric(predictInput())))
+        } else if(input$radio == "Percent Black"){
+            lrm <- lm(medIncome ~ perBlack, data = x)
+            predict(lrm, data.frame(perBlack = as.numeric(predictInput())))
+        } else if(input$radio == "Percent White"){
+            lrm <- lm(medIncome ~ perWhite, data = x)
+            predict(lrm, data.frame(perWhite = as.numeric(predictInput())))
+        } else if(input$radio == "Percent Hispanic"){
+            lrm <- lm(medIncome ~ perHis, data = x)
+            predict(lrm, data.frame(perHis = as.numeric(predictInput())))
+        } else {
+            lrm <- lm(medIncome ~ perCompHighSchool, data = x)
+            predict(lrm, data.frame(perCompHighSchool = as.numeric(predictInput())))
+        }
+    })
+    
     # Create the linear model
     output$lmModel <- renderPrint({
         newDataDemo <- getDataDemo()
