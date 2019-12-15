@@ -344,7 +344,7 @@ shinyServer(function(input, output, session){
         names(xrp) <- c("Race", 
                         "Number Killed", 
                         "Percent of Total Killed", 
-                        "Percent of US Population (2015)", 
+                        "Percent of US Population in the Region (2015)", 
                         "Proportion for Each Race (2015)")
         return(as.datatable(formattable(xrp, align = c("r", rep(ncol(xrp))))))
     })
